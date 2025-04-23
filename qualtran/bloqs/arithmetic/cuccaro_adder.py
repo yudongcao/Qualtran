@@ -36,7 +36,7 @@ class CuccaroADD(Bloq):
     def signature(self) -> Signature:
        return [Register('a', QUInt(self.bits)),Register('b', QUInt(self.bits + 1))]
        
-    def build_composite_bloq(self, bb:BloqBuilder,)  -> Dict[str,SoquetT]:
+    def build_composite_bloq(self, bb:BloqBuilder, a:Soquet, b:Soquet)  -> Dict[str,SoquetT]:
         n = self.bits
         a = bb.split(a)[::-1]
         b = bb.split(b)[::-1]
