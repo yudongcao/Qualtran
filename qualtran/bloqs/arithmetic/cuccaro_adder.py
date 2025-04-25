@@ -1,7 +1,7 @@
 from typing import Dict, Set
 import attrs
 from functools import cached_property
-from qualtran import Bloq, Signature, QUInt, Register, QBit, BloqBuilder, Soquet, SoquetT
+from qualtran import Bloq, Signature, QInt, Register, QBit, BloqBuilder, Soquet, SoquetT
 from qualtran.bloqs.basic_gates import CNOT,Toffoli
 from qualtran.drawing import show_bloq
 
@@ -41,8 +41,8 @@ class CuccaroADD(Bloq):
     
     @cached_property
     def signature(self) -> Signature:
-       return Signature([Register('a', QUInt(self.bitsize)),
-                         Register('b', QUInt(self.bitsize + 1))])
+       return Signature([Register('a', QInt(self.bitsize)),
+                         Register('b', QInt(self.bitsize + 1))])
        
     def build_composite_bloq(self, bb: 'BloqBuilder', a: 'Soquet', b: 'Soquet') -> Dict[str, 'SoquetT']:
 
