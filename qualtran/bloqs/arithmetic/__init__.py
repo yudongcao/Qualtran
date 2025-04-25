@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from qualtran.bloqs.arithmetic.cuccaro_adder import CuccaroADD
 from qualtran.bloqs.arithmetic.addition import Add, AddK, OutOfPlaceAdder
 from qualtran.bloqs.arithmetic.bitwise import BitwiseNot, Xor, XorK
 from qualtran.bloqs.arithmetic.comparison import (
