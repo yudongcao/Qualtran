@@ -47,25 +47,26 @@ class CuccaroADD(Bloq):
     def build_composite_bloq(self, bb: 'BloqBuilder', a: 'Soquet', b: 'Soquet') -> Dict[str, 'SoquetT']:
 
         n = self.bitsize
-        a, b = bb.split(a)[::-1], bb.split(b)[::-1]
+        a = bb.split(a)[::-1]
+        b = bb.split(b)[::-1]
         c = bb.allocate(dtype=QBit())
-
         for i in range(n):
-            if i:
-                a[i-1], b[i], a[i] = bb.add(MAJ(), c=a[i-1], b=b[i], a=a[i])
-            else:
+            if i == 0:
                 c, b[i], a[i] = bb.add(MAJ(), c=c, b=b[i], a=a[i])
-
+            else:
+                a[i-1], b[i], a[i] = bb.add(MAJ(), c=a[i-1], b=b[i], a=a[i])
+            
         a[n-1], b[n] = bb.add(CNOT(), ctrl=a[n-1], target=b[n])
 
         for i in range(n-1, -1, -1):
-            if i:
-                a[i-1], b[i], a[i] = bb.add(UMA(), c=a[i-1], s=b[i], a=a[i])
-            else:
+            if i == 0:
                 c, b[i], a[i] = bb.add(UMA(), c=c, s=b[i], a=a[i])
+            else:
+                a[i-1], b[i], a[i] = bb.add(UMA(), c=a[i-1], s=b[i], a=a[i])
 
         bb.free(c)
-        a, b = bb.join(a[::-1]), bb.join(b[::-1])
+        a = bb.join(a[::-1])
+        b = bb.join(b[::-1])
         return {'a': a, 'b': b}
     
     def build_call_graph(self, ssa: 'SympySymbolAllocator') -> Set['BloqCountT']:
