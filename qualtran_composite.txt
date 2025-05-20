@@ -1,0 +1,55 @@
+ if n%3 == 0:
+            m = n//3
+            q = 5
+            w = [0,1,"inf",-1,-2]
+            x0, x1, x2 = x[0:m], x[m:2*m], x[2*m:3*m]
+            y0, y1, y2 = y[0:m], y[m:2*m], y[2*m:3*m]
+            X = []
+            Y = []
+            for wk in w: 
+                if wk != "inf":
+                    xk = x0 + wk*x1 + wk**2*x2
+                    yk = y0 + wk*y1 + wk**2*y2
+                    X.append(xk)
+                    Y.append(yk)
+                else: 
+                    xk, yk = x2, y2
+                    X.append(xk)
+                    Y.append(yk)
+            for k in range(q):
+                pwk = self.build_composite_bloq(self,bb,X[k],Y[k])
+            v = self.precompute_vector(X,Y,k)
+                  
+        elif n%2 == 0:
+            m = n//2
+            q = 3
+            x0 = x[0:m]
+            x1 = x[m:n]
+            y0 = y[0:m]
+            y1 = y[m:n]
+        elif n==3:
+            m = 1
+            q = 5
+        elif n==2:
+            m = 1  
+            q = 3 
+
+    def precompute_vector(X: List[int], Y: List[int], q) -> List[int]:
+        """
+        Precompute the vector for the PhaseProduct operation.
+        """
+        v = []
+        for i in range(q):
+            
+        return v
+    
+    def precompute_matrix(w: List[int], q: int) -> List[int]:
+        """
+        Precompute the matrix for the PhaseProduct operation.
+        """
+        m = len(w)
+        M = np.zeros((m, m))
+        for i in range(m):
+            for j in range(m):
+                M[i][j] = w[i]**j
+        return M
