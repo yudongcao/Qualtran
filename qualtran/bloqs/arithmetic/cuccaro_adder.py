@@ -112,3 +112,4 @@ class MyCuccaroADD(Bloq):
             data=tensor, 
             inds=outgoing_inds + incoming_inds
         )]
+        
