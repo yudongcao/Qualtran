@@ -41,24 +41,30 @@ def implement_policy(n, policy):
 
     return num_qubits, k
 
-def qubit_count(n, policy='Default'):
+def qubit_count(n, policy='Default', method='Toom-Cook'):
     """
     Calculate the number of qubits required for a Toom-Cook multiplication circuit.
     :param n: Number of bits in the input numbers (assumed to be equal).
     :param policy: policy for determining the parameter k, which is the number of interpolation points in the Toom-Cook algorithm.
+    :param method: method for multiplication, either 'Trivial' or 'Toom-Cook'.
     :return: Number of qubits required.
     """
 
-    num_qubits, k = implement_policy(n, policy)
+    if method == 'Trivial':
+        return n * 2  # For trivial multiplication, we need 2 qubits per bit (one for each input bit).
+    
+    elif method == 'Toom-Cook':
 
-    if num_qubits > 6: # if this is not base case
-        if k == 2:
-            return qubit_count(num_qubits/2, policy) + qubit_count(num_qubits/2+1, policy)
-        if k == 3:
-            return qubit_count(num_qubits/3, policy) + 2*qubit_count(num_qubits/3+2, policy)
-    else: # base cases
-        if num_qubits in [2,3,4,6]:
-            return num_qubits * 2
+        num_qubits, k = implement_policy(n, policy)
+
+        if num_qubits > 6: # if this is not base case
+            if k == 2:
+                return qubit_count(num_qubits/2, policy) + qubit_count(num_qubits/2+1, policy)
+            if k == 3:
+                return qubit_count(num_qubits/3, policy) + 2*qubit_count(num_qubits/3+2, policy)
+        else: # base cases
+            if num_qubits in [2,3,4,6]:
+                return num_qubits * 2
 
 def T_gate_count(n, policy='Default', epsilon=1e-6, method='Toom-Cook'):
     """
@@ -66,6 +72,7 @@ def T_gate_count(n, policy='Default', epsilon=1e-6, method='Toom-Cook'):
     :param n: Number of bits in the input numbers (assumed to be equal).
     :param policy: policy for determining the parameter k.
     :param epsilon: error tolerance parameter for compiling CRz gates to Clifford+T gates.
+    :param method: method for multiplication, either 'Trivial' or 'Toom-Cook'.
     :return: Number of T gates required.
     """
     
@@ -101,7 +108,7 @@ if __name__ == "__main__":
     print(f"Number of qubits needed for {n}-bit Toom-Cook multiplication: {qubits_needed}")
 
     # Plotting the qubit count for different sizes
-    sizes = list(range(2, 2048))
+    sizes = list(range(2, 4096))
     plt.figure(figsize=(10,6))
 
     for policy in POLICY_OPTIONS:
@@ -113,6 +120,14 @@ if __name__ == "__main__":
             label=policy,       # legend label
             linewidth=2.5       # make the line bolder
         )
+    qubit_counts_trivial = [qubit_count(size, policy='Default', method='Trivial') for size in sizes]
+    plt.plot(
+        sizes,
+        qubit_counts_trivial,
+        label='Trivial Multiplication',  # legend label
+        linestyle='--',  # dashed line for trivial method
+        linewidth=2.5    # make the line bolder
+    )
 
     plt.title('Qubit Count for Toom-Cook Multiplication', fontsize=14)
     plt.xlabel('Number of Bits (n)', fontsize=12)
