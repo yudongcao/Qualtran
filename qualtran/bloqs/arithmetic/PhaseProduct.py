@@ -4,7 +4,7 @@ from functools import cached_property
 from qualtran import Bloq, Signature, QInt, Register, QBit, BloqBuilder, Soquet, SoquetT
 from qualtran.bloqs.basic_gates.rotation import CZPowGate
 from qualtran.drawing import show_bloq
-
+from qualtran.bloqs.arithmetic.cuccaro_adder import CuccaroADD
 # from qualtran.simulation.classical_sim import add_ints, ClassicalValT
 from qualtran.resource_counting import BloqCountT, SympySymbolAllocator
 from qualtran.symbolics import SymbolicFloat
@@ -367,4 +367,123 @@ class Base6(Bloq):
             'y4': y4,
             'y5': y5,
         }
+
+class PhaseProduct(Bloq):
+    
+    n: SymbolicFloat
+    
+    def signature(self) -> Signature:
+        return Signature(
+            [
+                Register('x', QInt()),
+                Register('y', QInt()),
+            ]
+        )
+    
+    def build_composite_bloq(self, bb : 'BloqBuilder', x : 'SoquetT', y : 'SoquetT'):
         
+        x, y = bb.split(x)[::-1],bb.split(y)[::-1]
+        n = self.n  
+        
+        if n==6:
+            return bb.add(Base6(), x0=x[0], x1=x[1], x2=x[2], x3=x[3], x4=x[4], x5=x[5], y0=y[0], y1=y[1], y2=y[2], y3=y[3], y4=y[4], y5=y[5])
+        elif n==4:
+            return bb.add(Base4(),x0=x[0], x1=x[1], x2=x[2], x3=x[3], y0=y[0], y1=y[1], y2=y[2], y3=y[3])
+        elif n==3:
+            return bb.add(Base3(),x0=x[0], x1=x[1], x2=x[2], y0=y[0], y1=y[1], y2=y[2])
+        elif n==2:
+            return bb.add(Base2(), x0=x[0], x1=x[1], y0=y[0], y1=y[1])  
+         
+        elif n%3 == 0:
+            
+                m = n//3
+                x0, x1, x2 = x[0:m], x[m:2*m], x[2*m:3*m]
+                y0, y1, y2 = y[0:m], y[m:2*m], y[2*m:3*m]
+                x0,x1,x2 = bb.join(x0[::-1]), bb.join(x1[::-1]), bb.join(x2[::-1])
+                y0,y1,y2 = bb.join(y0[::-1]), bb.join(y1[::-1]), bb.join(y2[::-1])
+                
+                x2, x1 = bb.add(CuccaroADD(m), a=x2, b=x1)
+                y2, y1 = bb.add(CuccaroADD(m), a=y2, b=y1)
+                x0, x1 = bb.add(CuccaroADD(m), a=x0, b=x1)
+                y0, y1 = bb.add(CuccaroADD(m), a=y0, b=y1)
+                
+                x0, y0 = bb.add(PhaseProduct(m), x=x0, y=y0)
+                x1, y1 = bb.add(PhaseProduct(m), x=x1, y=y1)
+                x2, y2 = bb.add(PhaseProduct(m), x=x2, y=y2)
+                
+                x1 = -x1
+                y1 = -y1
+                x0, x1 = bb.add(CuccaroADD(m), a=x0, b=x1)
+                y0, y1 = bb.add(CuccaroADD(m), a=y0, b=y1)
+                x2/2, x1 = bb.add(CuccaroADD(m), a=2*x2, b=x1)
+                y2/2, y1 = bb.add(CuccaroADD(m), a=2*y2, b=y1)
+                x1, x0 = bb.add(CuccaroADD(m), a=x1, b=x0)
+                y1, y0 = bb.add(CuccaroADD(m), a=y1, b=y0)
+                x0, x1 = bb.add(CuccaroADD(m), a=x0, b=x1)
+                y0, y1 = bb.add(CuccaroADD(m), a=y0, b=y1)
+                x2/2, x1 = bb.add(CuccaroADD(m), a=2*x2, b=x1)
+                y2/2, y1 = bb.add(CuccaroADD(m), a=2*y2, b=y1)
+                
+                x0, y0 = bb.add(PhaseProduct(m), x=x0, y=y0)
+                x1, y1 = bb.add(PhaseProduct(m),x=x1, y=y1)
+                
+                x1 = -x1
+                y1 = -y1
+                x2/2, x1 = bb.add(CuccaroADD(m), a=2*x2, b=x1)
+                y2/2, y1 = bb.add(CuccaroADD(m), a=2*y2, b=y1)
+                x1, x0/2 = bb.add(CuccaroADD(m), a=x1, b=2*x0)
+                y1, y0/2 = bb.add(CuccaroADD(m), a=y1, b=2*y0)
+                x0, x1 = bb.add(CuccaroADD(m), a=x0, b=x1)
+                y0, y1 = bb.add(CuccaroADD(m), a=y0, b=y1)
+                x2/2, x1 = bb.add(CuccaroADD(m), a=2*x2, b=x1)
+                y2/2, y1 = bb.add(CuccaroADD(m), a=2*y2, b=y1)
+                x1 = x1/2
+                y1 = y1/2 
+                
+                x0,x1,x2 = bb.split(x0)[::-1], bb.split(x1)[::-1], bb.split(x2)[::-1]
+                y0,y1,y2 = bb.split(y0)[::-1], bb.split(y1)[::-1], bb.split(y2)[::-1]
+                
+                x_chain = x0 + x1 + x2
+                y_chain = y0 + y1 + y2
+                
+                x = bb.join(x_chain[::-1])
+                y = bb.join(y_chain[::-1])
+                
+                return {'x': x, 'y': y} 
+                    
+        elif n%2 == 0:
+            
+            m = n//2
+            x0, x1 = x[0:m], x[m:n]
+            y0, y1 = y[0:m], y[m:n]
+            x0, x1 = bb.join(x0[::-1]), bb.join(x1[::-1])
+            y0, y1 = bb.join(y0[::-1]), bb.join(y1[::-1])
+            
+            x0, y0 = bb.add(PhaseProduct(m), x=x0, y=y0)
+            x1, y1 = bb.add(PhaseProduct(m), x=x1, y=y1)
+            
+            x0, x1 = bb.add(CuccaroADD(m), a=x0, b=x1)
+            y0, y1 = bb.add(CuccaroADD(m), a=y0, b=y1)
+            
+            x1,y1 = bb.add(PhaseProduct(m), x=x1, y=y1)
+            
+            -x0, x1 = bb.add(CuccaroADD(m), a=-x0, b=x1)
+            -y0, y1 = bb.add(CuccaroADD(m), a=-y0, b=y1)
+            
+            x0, x1 =  bb.split(x0)[::-1], bb.split(x1)[::-1]
+            y0, y1 = bb.split(y0)[::-1], bb.split(y1)[::-1]
+            
+            x_chain = x0 + x1
+            y_chain = y0 + y1
+            
+            x = bb.join(x_chain[::-1])
+            y = bb.join(y_chain[::-1])
+            
+            return {'x': x, 'y': y}                                             
+        
+        elif n%2 != 0 and n%3 != 0: 
+            x = x.append(0)
+            y = y.append(0)
+            return {'x': bb.join(x[::-1]), 'y': bb.join(y[::-1])} 
+
+            
